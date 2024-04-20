@@ -117,6 +117,76 @@ async function getNextProxy()
 	);
 }
 
+async function getNextProxyAvailability()
+{
+	return new Promise
+	(
+		(resolve, reject) =>
+		{
+			const readStream = fs.createReadStream(proxy_list_file);
+			const rl = readline.createInterface({
+				input: readStream,
+				output: process.stdout,
+				terminal: false
+			});
+			var proxyCount = 0;
+			var nextProxyAvailability = null;
+			
+			rl.on
+			(
+				'line',
+				(line) =>
+				{
+					var cLine = cleanString(line);
+
+					if (cLine == '' || cLine.startsWith('#'))
+					{
+						// skip
+					}
+					else
+					{
+						proxyCount++;
+						
+						var lineParts = cLine.split(',');
+						var cooldownTime = 0;
+						
+						if (lineParts.length > 1)
+						{
+							var timestamp = parseInt('0' + cleanString(lineParts[1]));
+							
+							if (nextProxyAvailability == null || nextProxyAvailability > timestamp)
+								nextProxyAvailability = timestamp;
+						}
+						else
+						{
+							nextProxyAvailability = 0;
+						}
+					}
+					
+					if (!keepRunning) reject(null);
+				}
+			);
+
+			rl.on
+			(
+				'close',
+				() =>
+				{
+					readStream.close();
+					
+					if (proxyCount == 0)
+						console.log('[WARNING] No proxies available in proxy list!');
+					else if (nextProxyAvailability == null)
+						console.log('[ERROR] Could not get next proxy availability!');
+					
+					if (nextProxyAvailability == 0) resolve(Math.floor(new Date().getTime() / 1000));
+					else resolve(nextProxy + proxy_cooldown * 3600 * 1000);
+				}
+			);
+		}
+	);
+}
+
 async function replaceProxy(ymlPath, newProxy)
 {
 	return new Promise
@@ -458,7 +528,19 @@ async function main()
 				console.log('[INFO] There were JS checks not passing. Considering ban. Replacing proxy...');
 				var nextProxy = await getNextProxy();
 				
-				if (nextProxy != null)
+				if (nextProxy == null)
+				{
+					var nextProxyAvailable = await getNextProxyAvailability();
+					var timestampNow = Math.floor(new Date().getTime() / 1000);
+					var timeDiff = nextProxyAvailable - timestampNow;
+					
+					if (timeDiff > 0)
+					{
+						console.log('[INFO] Next proxy available in ' + (timeDiff / 60).toFixed(1) + ' minutes. Sleeping...');
+						await wait(timeDiff * 1000);
+					}
+				}
+				else
 				{
 					var lastProxy = await replaceProxy(docker_container_yml, nextProxy);
 					console.log('[INFO] Replaced proxy "' + lastProxy + '" with "' + nextProxy + '". Restarting xilriws...');
