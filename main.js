@@ -457,10 +457,14 @@ async function main()
 			{
 				console.log('[INFO] There were JS checks not passing. Considering ban. Replacing proxy...');
 				var nextProxy = await getNextProxy();
-				var lastProxy = await replaceProxy(docker_container_yml, nextProxy);
-				console.log('[INFO] Replaced proxy "' + lastProxy + '" with "' + nextProxy + '". Restarting xilriws...');
-				var restartOutput = await restartDockerContainer(docker_container_yml);
-				//console.log('[RESPONSE] ' + restartOutput);
+				
+				if (nextProxy != null)
+				{
+					var lastProxy = await replaceProxy(docker_container_yml, nextProxy);
+					console.log('[INFO] Replaced proxy "' + lastProxy + '" with "' + nextProxy + '". Restarting xilriws...');
+					var restartOutput = await restartDockerContainer(docker_container_yml);
+					//console.log('[RESPONSE] ' + restartOutput);
+				}
 			}
 			else if (!hasLogs)
 			{
