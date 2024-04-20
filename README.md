@@ -5,6 +5,15 @@ This is a helper tool for [Xilriws](https://github.com/UnownHash/Xilriws-Public)
 I highly recommend to NOT run it as root. I recommend running both as the same non-privileged user.
 I also recommend running it seperate from unown, unless you want your whole stack to be restarted on each proxy ban.
 
+## Installation
+```shell
+git clone https://github.com/EmptyOne4K/Lickitung.git && cd Lickitung
+cp config.json.example config.json
+cp proxies.txt.example proxies.txt
+```
+
+Add your proxy list to `proxies.txt`. One proxy per line. Lines starting with `#` are ignored.
+
 ## PM2
 ```shell
 pm2 start main.js --name lickitung
