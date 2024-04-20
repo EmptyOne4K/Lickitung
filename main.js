@@ -573,7 +573,7 @@ async function main()
 			await wait(check_cycle_time * 60 * 1000);
 		}
 		
-		await log('[INFO] Graceful shutdown. Bye.');
+		await log('[INFO] Shutdown. Bye!');
 	}
 	catch (error)
 	{
