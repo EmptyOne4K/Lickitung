@@ -7,7 +7,7 @@ const { proxy_cooldown, check_cycle_time, docker_container_yml } = require('./co
 // DO NOT CHANGE UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING //
 
 const proxy_list_file = 'proxies.txt';
-const docker_worker_container_name = 'repo_xilriws-worker_[<WORKER_ID>]';
+const docker_worker_container_name = 'swirlix_xilriws-worker_[<WORKER_ID>]';
 const docker_logs_check_phrases = 
 [
 	"Didn't pass JS check",
