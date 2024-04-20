@@ -9,6 +9,11 @@ I also recommend running it seperate from unown, unless you want your whole stac
 ```shell
 git clone https://github.com/EmptyOne4K/Lickitung.git && cd Lickitung
 cp config.json.example config.json
+```
+
+Add the location of the `*.yml` file of your Xilriws to the config under `docker_container_yml`.
+
+```shell
 cp proxies.txt.example proxies.txt
 ```
 
