@@ -505,7 +505,7 @@ async function main()
 				
 				if (cleanString(dockerLogs) == '')
 				{
-					console.log('[WARNING] Docker worker "' + containerName + '" had no logs in the past 5 minutes.');
+					//console.log('[WARNING] Docker worker "' + containerName + '" had no logs in the past 5 minutes.');
 				}
 				else
 				{
