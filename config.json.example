@@ -1,0 +1,6 @@
+{
+    "proxy_cooldown": 25,
+	"check_cycle_time": 5,
+	"docker_container_yml": "~/repository/docker-compose.yml",
+	"LAST_LINE": "I HATE COMMAS"
+}
