@@ -104,15 +104,15 @@ async function getNextProxy()
 							}
 							else
 							{
-								console.log('[INFO] Proxy list updated successfully. Next proxy: ' + nextProxy);
+								log('[INFO] Proxy list updated successfully. Next proxy: ' + nextProxy);
 							}
 						}
 					);
 					
 					if (proxyCount == 0)
-						console.log('[WARNING] No proxies available in proxy list!');
+						log('[WARNING] No proxies available in proxy list!');
 					else if (nextProxy == null)
-						console.log('[WARNING] All proxies on cooldown!');
+						log('[WARNING] All proxies on cooldown!');
 					
 					resolve(nextProxy);
 				}
@@ -179,9 +179,9 @@ async function getNextProxyAvailability()
 					readStream.close();
 					
 					if (proxyCount == 0)
-						console.log('[WARNING] No proxies available in proxy list!');
+						log('[WARNING] No proxies available in proxy list!');
 					else if (nextProxyAvailability == null)
-						console.log('[ERROR] Could not get next proxy availability!');
+						log('[ERROR] Could not get next proxy availability!');
 					
 					if (nextProxyAvailability == 0) resolve(Math.floor(new Date().getTime() / 1000));
 					else resolve(nextProxy + proxy_cooldown * 3600 * 1000);
@@ -441,17 +441,23 @@ process.on('SIGINT', shutdown);
 function shutdown()
 {
 	keepRunning = false;
-	console.log('[INFO] Inited graceful shutdown.');
+	log('[INFO] Inited graceful shutdown.');
 	wait(15000);
 	process.exit();
+}
+
+function log(message)
+{
+	var now = new Date().toISOString();
+	console.log(now + ' ' + message);
 }
 
 // Main
 
 async function main()
 {
-	console.log('[INFO] Startup.');
-	console.log('[INFO] Checking if Docker container is running...');
+	await log('[INFO] Startup.');
+	await log('[INFO] Checking if Docker container is running...');
 	
 	await isContainerRunning(docker_worker_container_name.replace('[<WORKER_ID>]', 1))
 		.then
@@ -460,11 +466,11 @@ async function main()
 			{
 				if (isRunning)
 				{
-					console.log('[INFO] The Docker container is running.');
+					log('[INFO] The Docker container is running.');
 				}
 				else
 				{
-					console.log('[ERROR] The Docker container is not running. Exiting.');
+					log('[ERROR] The Docker container is not running. Exiting.');
 					keepRunning = false;
 				}
 			}
@@ -485,7 +491,7 @@ async function main()
 	
 	if (replicaCount == 0)
 	{
-		console.log('[ERROR] Could not find replica count definition. Exiting.');
+		await log('[ERROR] Could not find replica count definition. Exiting.');
 		keepRunning = false;
 	}
 	
@@ -494,11 +500,11 @@ async function main()
 	try
 	{
 		if (keepRunning)
-			console.log('[INFO] Starting docker/proxy check cycle.');
+			await log('[INFO] Starting docker/proxy check cycle.');
 		
 		while (keepRunning)
 		{
-			console.log('[INFO] Checking docker logs of ' + replicaCount + ' replicas...');
+			await log('[INFO] Checking docker logs of ' + replicaCount + ' replicas...');
 			var hasLogs = false;
 			var proxyBanned = false;
 			
@@ -509,7 +515,7 @@ async function main()
 				
 				if (cleanString(dockerLogs) == '')
 				{
-					//console.log('[WARNING] Docker worker "' + containerName + '" had no logs in the past 5 minutes.');
+					//await log('[WARNING] Docker worker "' + containerName + '" had no logs in the past 5 minutes.');
 				}
 				else
 				{
@@ -522,13 +528,13 @@ async function main()
 							break replica_loop;
 						}
 						
-					//console.log('[DEBUG INFO] ' + dockerLogs);
+					//await log('[DEBUG INFO] ' + dockerLogs);
 				}
 			}
 			
 			if (proxyBanned)
 			{
-				console.log('[INFO] There were JS checks not passing. Considering ban. Replacing proxy...');
+				await log('[INFO] There were JS checks not passing. Considering ban. Replacing proxy...');
 				var nextProxy = await getNextProxy();
 				
 				if (nextProxy == null)
@@ -539,34 +545,34 @@ async function main()
 					
 					if (timeDiff > 0)
 					{
-						console.log('[INFO] Next proxy available in ' + (timeDiff / 60).toFixed(1) + ' minutes. Sleeping...');
+						await log('[INFO] Next proxy available in ' + (timeDiff / 60).toFixed(1) + ' minutes. Sleeping...');
 						await wait(timeDiff * 1000);
 					}
 				}
 				else
 				{
 					var lastProxy = await replaceProxy(docker_container_yml, nextProxy);
-					console.log('[INFO] Replaced proxy "' + lastProxy + '" with "' + nextProxy + '". Restarting xilriws...');
+					await log('[INFO] Replaced proxy "' + lastProxy + '" with "' + nextProxy + '". Restarting xilriws...');
 					var restartOutput = await restartDockerContainer(docker_container_yml);
-					//console.log('[RESPONSE] ' + restartOutput);
+					//await log('[RESPONSE] ' + restartOutput);
 				}
 			}
 			else if (!hasLogs)
 			{
-				console.log('[WARNING] No Docker worker had logs in the past 5 minutes. Considering crash. Restarting containers...');
+				await log('[WARNING] No Docker worker had logs in the past 5 minutes. Considering crash. Restarting containers...');
 				var restartOutput = await restartDockerContainer(docker_container_yml);
-				//console.log('[RESPONSE] ' + restartOutput);
+				//await log('[RESPONSE] ' + restartOutput);
 			}
 			else
 			{
-				console.log('[INFO] Logs look good.');
+				await log('[INFO] Logs look good.');
 			}
 			
-			console.log('[INFO] Sleeping for ' + check_cycle_time + ' minutes...');
+			await log('[INFO] Sleeping for ' + check_cycle_time + ' minutes...');
 			await wait(check_cycle_time * 60 * 1000);
 		}
 		
-		console.log('[INFO] Graceful shutdown. Bye.');
+		await log('[INFO] Graceful shutdown. Bye.');
 	}
 	catch (error)
 	{
