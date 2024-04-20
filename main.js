@@ -91,23 +91,24 @@ async function getNextProxy()
 				{
 					readStream.close();
 					
-					fs.writeFile
-					(
-						proxy_list_file,
-						proxy_list,
-						(error) =>
-						{
-							if (error)
+					if (nextProxy != null)
+						fs.writeFile
+						(
+							proxy_list_file,
+							proxy_list,
+							(error) =>
 							{
-								console.error('[ERROR] Could not update proxy list: ' + error);
-								reject(error);
+								if (error)
+								{
+									console.error('[ERROR] Could not update proxy list: ' + error);
+									reject(error);
+								}
+								else
+								{
+									log('[INFO] Proxy list updated successfully. Next proxy: ' + nextProxy);
+								}
 							}
-							else
-							{
-								log('[INFO] Proxy list updated successfully. Next proxy: ' + nextProxy);
-							}
-						}
-					);
+						);
 					
 					if (proxyCount == 0)
 						log('[WARNING] No proxies available in proxy list!');
@@ -184,7 +185,7 @@ async function getNextProxyAvailability()
 						log('[ERROR] Could not get next proxy availability!');
 					
 					if (nextProxyAvailability == 0) resolve(Math.floor(new Date().getTime() / 1000));
-					else resolve(nextProxy + proxy_cooldown * 3600 * 1000);
+					else resolve(nextProxyAvailability + proxy_cooldown * 3600);
 				}
 			);
 		}
