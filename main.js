@@ -8,7 +8,11 @@ const { proxy_cooldown, check_cycle_time, docker_container_yml } = require('./co
 
 const proxy_list_file = 'proxies.txt';
 const docker_worker_container_name = 'repo_xilriws-worker_[<WORKER_ID>]';
-const docker_logs_check_phrase = "Didn't pass JS check";
+const docker_logs_check_phrases = 
+[
+	"Didn't pass JS check",
+	"30 consecutive failures in the browser! this is really bad",
+];
 
 // Libs
 
@@ -498,7 +502,7 @@ async function main()
 			var hasLogs = false;
 			var proxyBanned = false;
 			
-			for (var n = 1; n < replicaCount + 1; n++)
+			replica_loop: for (var n = 1; n < replicaCount + 1; n++)
 			{
 				var containerName = docker_worker_container_name.replace('[<WORKER_ID>]', n);
 				var dockerLogs = await getDockerLogs(containerName);
@@ -511,15 +515,14 @@ async function main()
 				{
 					hasLogs = true;
 					
-					if (dockerLogs.includes(docker_logs_check_phrase))
-					{
-						proxyBanned = true;
-						break;
-					}
-					else
-					{
-						//console.log('[DEBUG INFO] ' + dockerLogs);
-					}
+					for (var k = 0; k < docker_logs_check_phrases.length; k++)
+						if (dockerLogs.includes(docker_logs_check_phrases[k]))
+						{
+							proxyBanned = true;
+							break replica_loop;
+						}
+						
+					//console.log('[DEBUG INFO] ' + dockerLogs);
 				}
 			}
 			
