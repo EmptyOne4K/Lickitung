@@ -7,7 +7,7 @@ const { proxy_cooldown, check_cycle_time, docker_container_yml } = require('./co
 // DO NOT CHANGE UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING //
 
 const proxy_list_file = 'proxies.txt';
-const docker_worker_container_name = 'repo_xilriws-worker_[<WORKER_ID>]';
+const docker_worker_container_name = '[<PARENT_DIR>]_xilriws-worker_[<WORKER_ID>]';
 const docker_logs_check_phrases = 
 [
 	"Didn't pass JS check",
@@ -265,6 +265,30 @@ function cleanString(line)
 	return line.replace(' ', '').replace('\t', '').replace('\r', '').replace('\n', '')
 }
 
+async function getParentDirectoryName(ymlPath)
+{
+	return new Promise
+	(
+		(resolve, reject) =>
+		{
+			const expandedPath = ymlPath.replace(/^~($|\/|\\)/, `${os.homedir()}$1`);
+			const pathParts = expandedPath.split('/');
+			
+			for (var i = pathParts.length - 2; i >= 0; i--)
+			{
+				if (pathParts[i] != '')
+				{
+					resolve(pathParts[i]);
+					return;
+				}
+			}
+			
+			reject(null);
+		}
+	);
+}
+
+
 async function getDockerReplicas(ymlPath)
 {
 	return new Promise
@@ -460,7 +484,11 @@ async function main()
 	await log('[INFO] Startup.');
 	await log('[INFO] Checking if Docker container is running...');
 	
-	await isContainerRunning(docker_worker_container_name.replace('[<WORKER_ID>]', 1))
+	const parentDir = await getParentDirectoryName(docker_container_yml);
+	//await log('[DEBUG] Parent dir name: ' + parentDir);
+	if (parentDir == null) parentDir == '';
+	
+	await isContainerRunning(docker_worker_container_name.replace('[<WORKER_ID>]', 1).replace('[<PARENT_DIR>]', parentDir))
 		.then
 		(
 			(isRunning) =>
@@ -511,7 +539,7 @@ async function main()
 			
 			replica_loop: for (var n = 1; n < replicaCount + 1; n++)
 			{
-				var containerName = docker_worker_container_name.replace('[<WORKER_ID>]', n);
+				var containerName = docker_worker_container_name.replace('[<WORKER_ID>]', n).replace('[<PARENT_DIR>]', parentDir);
 				var dockerLogs = await getDockerLogs(containerName);
 				
 				if (cleanString(dockerLogs) == '')
